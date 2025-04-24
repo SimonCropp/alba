@@ -1,14 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Alba.Security;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Shouldly;
 using WebApi;
-using WebAppSecuredWithJwt;
-using Xunit;
 
 namespace Alba.Testing.Security
 {
@@ -16,7 +11,7 @@ namespace Alba.Testing.Security
     {
         private IAlbaHost theHost = null!;
         
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             #region sample_setup_jwt_stub
             // This is a new Alba extension that can "stub" out
@@ -31,7 +26,7 @@ namespace Alba.Testing.Security
             #endregion
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             await theHost.DisposeAsync();
         }

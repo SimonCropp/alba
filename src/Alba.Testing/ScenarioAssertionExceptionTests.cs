@@ -1,5 +1,5 @@
-﻿using Shouldly;
-using Xunit;
+﻿using Microsoft.AspNetCore.Http;
+using Shouldly;
 
 namespace Alba.Testing
 {
@@ -37,16 +37,21 @@ namespace Alba.Testing
         public void show_the_body_in_the_message_if_set()
         {
             var ex = new ScenarioAssertionException();
+            var ctx = new DefaultHttpContext();
+            ctx.Response.Body = new MemoryStream();
+            var body = "<html></html>";
+            using var sw = new StreamWriter(ctx.Response.Body);
+            sw.Write(body);
+            sw.Flush();
+            
+            var context = new AssertionContext(ctx, ex);
             ex.Add("You stink!");
 
             ex.Message.ShouldNotContain("Actual body text was:");
 
-            ex.Body = "<html></html>";
-
-
-
+            context.ReadBodyAsString();
             ex.Message.ShouldContain("Actual body text was:");
-            ex.Message.ShouldContain(ex.Body);
+            ex.Message.ShouldContain(body);
         }
     }
 }

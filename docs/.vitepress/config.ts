@@ -1,10 +1,4 @@
 import { defineConfig } from 'vitepress'
-import { BUNDLED_LANGUAGES } from 'shiki'
-
-// Include `cs` as alias for csharp
-BUNDLED_LANGUAGES
-  .find(lang => lang.id === 'csharp')!.aliases!.push('cs');
-
 
 export default defineConfig({
     title: 'Alba',
@@ -26,12 +20,10 @@ export default defineConfig({
             { text: 'Discord | Join Chat', link: 'https://discord.gg/WMxrvegf8H' }
         ],
 
-        algolia: {
-            appId: '2V5OM390DF',
-            apiKey: '674cd4f3e6b6ebe232a980c7cc5a0270',
-            indexName: 'alba_index'
+        search: {
+            provider: 'local'
         },
-
+        
         sidebar: [
             {
                 text: 'Getting Started',
@@ -54,10 +46,12 @@ export default defineConfig({
 function getGuideSidebar() {
     return [
         { text: 'Alba Setup', link: '/guide/gettingstarted' },
-        { text: 'Integrating with xUnit.Net', link: '/guide/xunit' },
+        { text: 'Integrating with xUnit', link: '/guide/xunit' },
         { text: 'Integrating with NUnit', link: '/guide/nunit' },
+        { text: 'Integrating with TUnit', link: '/guide/tunit' },
         { text: 'Extension Model', link: '/guide/extensions' },
         { text: 'Security Extensions', link: '/guide/security' },
+        { text: 'Snapshot Testing', link: '/guide/snapshot' },
         { text: 'Tracing & Open Telemetry', link: '/guide/opentelemetry' },
         { text: 'Alternative Bootstrapping', link:'/guide/bootstrapping'},
         { text: 'History & Architecture', link: '/guide/history' },

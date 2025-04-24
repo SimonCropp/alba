@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿namespace Alba.Assertions;
 
-namespace Alba.Assertions;
-
-internal class HeaderExistsAssertion : IScenarioAssertion
+internal sealed  class HeaderExistsAssertion : IScenarioAssertion
 {
     private readonly string _headerKey;
 
@@ -11,13 +9,13 @@ internal class HeaderExistsAssertion : IScenarioAssertion
         _headerKey = headerKey;
     }
 
-    public void Assert(Scenario scenario, HttpContext context, ScenarioAssertionException ex)
+    public void Assert(Scenario scenario, AssertionContext context)
     {
-        var values = context.Response.Headers[_headerKey];
+        var values = context.HttpContext.Response.Headers[_headerKey];
 
         if (values.Count == 0)
         {
-            ex.Add($"Expected header '{_headerKey}' to be present but no values were found on the response.");
+            context.AddFailure($"Expected header '{_headerKey}' to be present but no values were found on the response.");
         }
 
     }

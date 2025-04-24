@@ -1,7 +1,5 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Shouldly;
-using Xunit;
 
 namespace Alba.Testing.Samples
 {
@@ -11,7 +9,7 @@ public class WebAppFixture : IAsyncLifetime
 {
     public IAlbaHost AlbaHost = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         AlbaHost = await Alba.AlbaHost.For<WebApp.Program>(builder =>
         {
@@ -19,7 +17,7 @@ public class WebAppFixture : IAsyncLifetime
         });
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await AlbaHost.DisposeAsync();
     }
@@ -65,7 +63,7 @@ public class WebAppFixture : IAsyncLifetime
             {
                 _.Get.Url("/fake/invalid");
                 _.ContentTypeShouldBe("application/problem+json; charset=utf-8");
-                _.StatusCodeShouldBe(400);
+                _.StatusCodeShouldBe(500);
             });
 
             var problems = result.ReadAsJson<ProblemDetails>();

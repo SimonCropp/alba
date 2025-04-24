@@ -1,23 +1,20 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿namespace Alba.Assertions;
 
-namespace Alba.Assertions
+internal sealed class BodyDoesNotContainAssertion : IScenarioAssertion
 {
-    internal class BodyDoesNotContainAssertion : IScenarioAssertion
+    public string Text { get; set; }
+
+    public BodyDoesNotContainAssertion(string text)
     {
-        public string Text { get; set; }
+        Text = text;
+    }
 
-        public BodyDoesNotContainAssertion(string text)
+    public void Assert(Scenario scenario, AssertionContext context)
+    {
+        var body = context.ReadBodyAsString();
+        if (body.Contains(Text))
         {
-            Text = text;
-        }
-
-        public void Assert(Scenario scenario, HttpContext context, ScenarioAssertionException ex)
-        {
-            var body = ex.ReadBody(context);
-            if (body.Contains(Text))
-            {
-                ex.Add($"Text '{Text}' should not be found in the response body");
-            }
+            context.AddFailure($"Text '{Text}' should not be found in the response body");
         }
     }
 }

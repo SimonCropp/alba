@@ -1,53 +1,99 @@
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using System.Security.Claims;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace Alba.Security
+namespace Alba.Security;
+
+public sealed class AuthenticationStub : AuthenticationExtensionBase, IAlbaExtension
 {
+    private const string TestSchemaName = "Test";
+
+    internal string? OverrideSchemeTargetName { get; }
+
     /// <summary>
-    /// Stubs out security in all Alba scenarios to always authenticate
-    /// a user on each request with the configured claims
+    /// Creates a new authentication stub. Will override all implementations by default.
     /// </summary>
-    public class AuthenticationStub : AuthenticationExtensionBase, IAlbaExtension
+    /// <param name="overrideSchemeTargetName">Override a specific authentication schema.</param>
+    public AuthenticationStub(string? overrideSchemeTargetName = null)
+        => OverrideSchemeTargetName = overrideSchemeTargetName;
+
+    void IDisposable.Dispose()
     {
-        void IDisposable.Dispose()
+        // nothing to dispose
+    }
+
+    ValueTask IAsyncDisposable.DisposeAsync() => ValueTask.CompletedTask;
+
+    Task IAlbaExtension.Start(IAlbaHost host) => Task.CompletedTask;
+
+    IHostBuilder IAlbaExtension.Configure(IHostBuilder builder)
+    {
+        return builder.ConfigureServices(services =>
         {
+            services.AddSingleton(this);
+            services.AddTransient<IAuthenticationSchemeProvider, MockSchemeProvider>();
+        });
+    }
+
+    internal ClaimsPrincipal BuildPrincipal(HttpContext context)
+    {
+        var claims = allClaims(context);
+        var identity = new ClaimsIdentity(claims, TestSchemaName);
+        var principal = new ClaimsPrincipal(identity);
+        return principal;
+    }
+
+    private sealed class MockSchemeProvider : AuthenticationSchemeProvider
+    {
+        private readonly string? _overrideSchemaTarget;
+
+        public MockSchemeProvider(AuthenticationStub authSchemaStub, IOptions<AuthenticationOptions> options)
+            : base(options)
+        {
+            _overrideSchemaTarget = authSchemaStub.OverrideSchemeTargetName;
         }
 
-        ValueTask IAsyncDisposable.DisposeAsync()
+        public override Task<AuthenticationScheme?> GetSchemeAsync(string name)
         {
-            return ValueTask.CompletedTask;
-        }
-
-        Task IAlbaExtension.Start(IAlbaHost host)
-        {
-            return Task.CompletedTask;
-        }
-
-        IHostBuilder IAlbaExtension.Configure(IHostBuilder builder)
-        {
-            return builder.ConfigureServices(services =>
+            if(_overrideSchemaTarget == null)
+                return Task.FromResult(new AuthenticationScheme(
+                    TestSchemaName,
+                    TestSchemaName,
+                    typeof(MockAuthenticationHandler)))!;
+            if (name.Equals(_overrideSchemaTarget, StringComparison.OrdinalIgnoreCase))
             {
-                services.AddHttpContextAccessor();
-                services.AddSingleton(this);
-                services.AddAuthentication("Test")
-                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                        "Test", _ => {});
-            });
+                var scheme = new AuthenticationScheme(
+                    TestSchemaName,
+                    TestSchemaName,
+                    typeof(MockAuthenticationHandler));
+
+                return Task.FromResult(scheme)!;
+            }
+
+            return base.GetSchemeAsync(name);
         }
 
-        internal ClaimsPrincipal BuildPrincipal(HttpContext context)
+        private sealed class MockAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
         {
-            var claims = allClaims(context);
-            var identity = new ClaimsIdentity(claims, "Test");
+            private readonly AuthenticationStub _authenticationSchemaStub;
 
-            var principal = new ClaimsPrincipal(identity);
 
-            return principal;
+            public MockAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, AuthenticationStub authenticationSchemaStub) : base(options, logger, encoder)
+            {
+                _authenticationSchemaStub = authenticationSchemaStub;
+            }
+
+            protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+            {
+                var principal = _authenticationSchemaStub.BuildPrincipal(Context);
+                var ticket = new AuthenticationTicket(principal, TestSchemaName);
+                return Task.FromResult(AuthenticateResult.Success(ticket));
+            }
         }
     }
 }

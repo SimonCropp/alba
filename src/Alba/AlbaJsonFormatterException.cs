@@ -1,11 +1,8 @@
-using System;
+namespace Alba;
 
-namespace Alba
+public sealed class AlbaJsonFormatterException : Exception
 {
-    public class AlbaJsonFormatterException : Exception
+    public AlbaJsonFormatterException(string json) : base($"The JSON formatter was unable to process the raw JSON:\n{json}")
     {
-        public AlbaJsonFormatterException(string json) : base($"The JSON formatter was unable to process the raw JSON:\n{json}")
-        {
-        }
     }
 }

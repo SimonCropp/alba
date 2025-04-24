@@ -1,13 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using Alba.Security;
 using IdentityServer.New;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using WebApi;
-using Xunit;
-using Program = WebAppSecuredWithJwt.Program;
 
 namespace Alba.Testing.Security
 {
@@ -23,7 +19,7 @@ namespace Alba.Testing.Security
             _fixture = fixture;
         }
 
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             #region sample_OpenConnectClientCredentials
 
@@ -51,7 +47,7 @@ namespace Alba.Testing.Security
             #endregion
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             await theHost.DisposeAsync();
         }
@@ -134,7 +130,7 @@ namespace Alba.Testing.Security
                 x.StatusCodeShouldBeOk();
             });
 
-            var output = response.ReadAsJson<Result>();
+            var output = await response.ReadAsJsonAsync<Result>();
             output.Sum.ShouldBe(9);
             output.Product.ShouldBe(24);
         }
